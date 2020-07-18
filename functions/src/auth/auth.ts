@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as express from "express"
-
+import {  User } from './user'
 export const authCheck = async (req : express.Request, res : express.Response, next : express.NextFunction) => {
     console.log('Check if request is authorized with Firebase ID token');
     if ((!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) &&
@@ -31,7 +31,7 @@ export const authCheck = async (req : express.Request, res : express.Response, n
     try {
       const decodedIdToken = await admin.auth().verifyIdToken(idToken);
       console.log('ID Token correctly decoded', decodedIdToken);
-      req.body.user = decodedIdToken;
+      res.locals.user = decodedIdToken
       next();
       return;
     } catch (error) {
@@ -40,3 +40,19 @@ export const authCheck = async (req : express.Request, res : express.Response, n
       return;
     }
   };
+
+export const onUserCreate = async (user : admin.auth.UserRecord) => {
+  const userData : User = {
+    email : user.email,
+    progressionLevel : 0,
+    progressionExp : 0,
+  }
+  const storeUser = admin.firestore().collection('users').doc(user.uid).set(userData)
+  return storeUser;
+}
+
+export const onUserDelete = async (user : admin.auth.UserRecord) => {
+  const doc = admin.firestore().collection('users').doc(user.uid);
+  const deleteResult = await doc.delete();
+  return deleteResult;
+}

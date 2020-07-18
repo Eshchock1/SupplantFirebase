@@ -3,8 +3,8 @@ import * as admin from 'firebase-admin';
 import * as express from "express"
 import * as cors from "cors"
 import * as cookieParser from "cookie-parser"
-// import {authCheck} from "./auth/auth"
-import * as Clarifai from "clarifai"
+import * as Auth from "./auth/auth"
+// import * as Clarifai from "clarifai"
 const app = express();
 
 admin.initializeApp(functions.config().firebase);
@@ -12,29 +12,28 @@ admin.initializeApp(functions.config().firebase);
 app.use(cors({origin : true}));
 app.use(cookieParser());
 
-// app.use(authCheck);
+app.use(Auth.authCheck);
+
+export const newUserSignup = functions.auth.user().onCreate(Auth.onUserCreate);
+export const userDelete = functions.auth.user().onDelete(Auth.onUserDelete);
 
 app.get('/hello', (req, res) => {
-res.send(`Hello boi`);
+res.send(`Hello ${res.locals.user.email}`);
 });
 
 //authentication key: e4d847d4fdef446594c5b84aa20c1a79
 // Predict the contents of an image by passing in a URL.
-app.get("/ree", (req, res) => {
-    const cApp = new Clarifai.App({apiKey: 'e4d847d4fdef446594c5b84aa20c1a79'});
-    console.log(cApp.models.predict);
-    cApp.models.predict("https://samples.clarifai.com/food.jpg").then(
-    function(response: any) {
-        console.log(response);
-        res.json({response});
-      // do something with response
-    }
-  ).catch( function(err: any) {
-    console.log(err+"bruhmoment");
-  // there was an error
-});
-    res.send("hi")
-})
+// app.get("/ree", (req, res) => {
+//   const cApp = new Clarifai.App({apiKey: '4eaa8ee301d04821a00f168bf42ab9dd'});
+//   console.log(cApp.models.predict);
+//   // console.log(Object.entries(cApp))
+//   cApp.models.predict(Clarifai.GENERAL_MODEL, 'https://samples.clarifai.com/food.jpg')
+// .then((response: any) => {
+//   console.log((response.outputs[0].data.concepts))
+//   res.json(response.outputs[0].data.concepts)
+// }).catch((err : any)=>console.log(err));
+//   res.send("hi")
+// })
 
   
   // This HTTPS endpoint can only be accessed by your Firebase Users.
