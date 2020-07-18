@@ -1,25 +1,51 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as express from "express"
+import * as cors from "cors"
+import * as cookieParser from "cookie-parser"
+// import {authCheck} from "./auth/auth"
+import * as Clarifai from "clarifai"
+const app = express();
+
 admin.initializeApp(functions.config().firebase);
 
-export const testAuth= functions.https.onRequest(async(req,res) => {
-    const token = req.headers.authorization;
-    if(token)
-    {
-        admin.auth().verifyIdToken(token).then(function(decodedToken)
-        {
-            res.json({result :`GOTTEM ${decodedToken} + ${token}`});
-        }).catch(err => {
-            res.json({result :`failed ${err} + ${token}`});
-        });
-    }    
+app.use(cors({origin : true}));
+app.use(cookieParser());
+
+// app.use(authCheck);
+
+app.get('/hello', (req, res) => {
+res.send(`Hello boi`);
+});
+
+//authentication key: e4d847d4fdef446594c5b84aa20c1a79
+// Predict the contents of an image by passing in a URL.
+app.get("/ree", (req, res) => {
+    const cApp = new Clarifai.App({apiKey: 'e4d847d4fdef446594c5b84aa20c1a79'});
+    console.log(cApp.models.predict);
+    cApp.models.predict("https://samples.clarifai.com/food.jpg").then(
+    function(response: any) {
+        console.log(response);
+        res.json({response});
+      // do something with response
+    }
+  ).catch( function(err: any) {
+    console.log(err+"bruhmoment");
+  // there was an error
+});
+    res.send("hi")
 })
 
+  
+  // This HTTPS endpoint can only be accessed by your Firebase Users.
+  // Requests need to be authorized by providing an `Authorization` HTTP header
+  // with value `Bearer <Firebase ID Token>`.
+export const api = functions.https.onRequest(app);
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
 //
 // export const helloWorld = functions.https.onRequest((request, response) => {
 //   functions.logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+// Instantiate a new Clarifai app by passing in your API key.
+
